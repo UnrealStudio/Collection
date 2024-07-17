@@ -2,6 +2,7 @@ using UnityEngine;
 
 public static class Consts
 {
+    public const float eps = 1e-6f;
     /// <summary>
     /// 计算点在直线上的投影
     /// </summary>
@@ -25,4 +26,16 @@ public static class Consts
         // 计算投影点
         return pointA + (vectorAB * projectionFactor);
     }
+
+    /// <summary>
+    /// 计算直线的垂线
+    /// </summary>
+
+    public static Vector2 PerpendicularLine(in Vector2 pointA, in Vector2 pointB) => new(pointB.y - pointA.y, -(pointB.x - pointA.x));
+
+    /// <summary>
+    /// 计算两条投影线段（长度上）是否相交
+    /// </summary>
+    /// <returns></returns>
+    public static bool OverlapRange(float aMin, float aMax, float bMin, float bMax) => (aMin + eps) <= bMax && (aMax - eps) >= bMin;
 }
