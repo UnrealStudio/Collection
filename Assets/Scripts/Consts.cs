@@ -85,7 +85,7 @@ public static class Consts
     /// <param name="d">第二条线段的另一个端点坐标</param>
     /// <param name="crossPoint">输出交点的坐标，如果没有交点输出(0,0)</param>
     /// <returns>如果有交点返回True，否则返回False</returns>
-    public static bool GetCrossPoint(Vector2 a, Vector2 b, Vector2 c, Vector2 d, out Vector2 crossPoint)
+    public static bool HasCrossPoint(Vector2 a, Vector2 b, Vector2 c, Vector2 d, out Vector2 crossPoint)
     {
         crossPoint = Vector2.zero;
         double denominator = (b.y - a.y) * (d.x - c.x) - (a.x - b.x) * (c.y - d.y);
@@ -121,5 +121,16 @@ public static class Consts
         float crossProduct = (lineVector.x * pointVector.y) - (lineVector.y * pointVector.x);
         // 如果叉乘结果大于0，则点在直线的左侧
         return crossProduct > 0;
+    }
+
+    /// <summary>
+    /// 计算点到直线的距离，使用斜率式
+    /// </summary>
+    public static float GetDistFromPoint2Line(Vector3 p, Vector3 p1, Vector3 p2)
+    {
+        if(Mathf.Abs(p2.x - p1.x) <= eps)
+            return Mathf.Abs(p.x - p1.x);
+        float k = (p2.y - p1.y) / (p2.x - p1.x);
+        return Mathf.Abs(k * p.x - p.y + p1.y - k * p1.x) / Mathf.Sqrt(k + 1);
     }
 }

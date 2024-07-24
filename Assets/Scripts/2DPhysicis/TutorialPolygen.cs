@@ -36,7 +36,11 @@ namespace NarrowPhase
                 {
                     List<Vector2> posA = positions.GetRange(0, 3).Select(x => (Vector2)x).ToList();
                     List<Vector2> posB = positions.GetRange(3, 3).Select(x => (Vector2)x).ToList();
-                    bool res = SAT.OverlapPolyPoly2D(posA, posB, SeparatePoly);
+                    bool res = false;
+                    if (NarrowPhaseType == NarrowPhaseType.SAT)
+                        res = SAT.OverlapPolyPoly2D(posA, posB, SeparatePoly);
+                    else if (NarrowPhaseType == NarrowPhaseType.GJK)
+                        res = GJK.OverlapPolyPoly2D(posA, posB, SeparatePoly);
                     if (res)
                     {
                         Debug.Log("两个三角形判定区域有重叠");
