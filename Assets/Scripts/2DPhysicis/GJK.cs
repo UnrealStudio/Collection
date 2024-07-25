@@ -33,8 +33,8 @@ namespace NarrowPhase
 
             // 第三次迭代，选择两个单纯形顶点的垂线，同时进行一次过原点的判断
             SimplexList.Add(GetSimplexNode(GetPerpendicularLineToOrigin(SimplexList[0], SimplexList[1]), polyA, polyB));
-            if (!isCrossingOrigin(SimplexList[0], SimplexList[2]))
-                return false;
+            //if (!isCrossingOrigin(SimplexList[0], SimplexList[2]) && !isCrossingOrigin(SimplexList[1], SimplexList[2]))
+            //    return false;
 
             // 开始递归迭代
             while(true)
@@ -52,7 +52,7 @@ namespace NarrowPhase
                     if (newNode == SimplexList[i])
                         return false;
                 }
-                if (!isCrossingOrigin(SimplexList[0], newNode))
+                if (!isCrossingOrigin(SimplexList[index1], newNode) && !isCrossingOrigin(SimplexList[index2], newNode))
                     return false;
 
                 // 更新单纯形
@@ -89,7 +89,7 @@ namespace NarrowPhase
         }
 
         /// <summary>
-        /// 根据两个点的坐标，通过叉乘得到朝向原点的法向量
+        /// 根据两个点的坐标，通过点乘得到朝向原点的法向量
         /// </summary>
         private static Vector2 GetPerpendicularLineToOrigin(in Vector2 pA, in Vector2 pB)
         {
@@ -116,7 +116,7 @@ namespace NarrowPhase
         /// <summary>
         /// 找到多边形距离原点最近的边
         /// </summary>
-        private static Vector2 GetCloestEdgeToOrigin(List<Vector2> poly, out float index1, out float index2)
+        private static Vector2 GetCloestEdgeToOrigin(List<Vector2> poly, out int index1, out int index2)
         {
             int n = poly.Count;
             float minDist = float.MaxValue;

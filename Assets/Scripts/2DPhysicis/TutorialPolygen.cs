@@ -16,8 +16,11 @@ namespace NarrowPhase
 
         // 存储屏幕坐标的列表
         private List<Vector3> positions = new();
+		public List<Vector2> TestPolyA;
+		public List<Vector2> TestPolyB;
 
-        private Vector3 mousePosition;
+		private Vector3 mousePosition;
+		private bool isOverlap = false;
 
         // 是否分离两个多边形
         public bool SeparatePoly;
@@ -29,60 +32,85 @@ namespace NarrowPhase
 
             if (Input.GetMouseButtonDown(0))
             {
-                if (positions.Count >= 6)
-                    positions.Clear();
+                if (positions.Count >= 8)
+				{
+					isOverlap = false;
+					positions.Clear();
+				}
                 positions.Add(mousePosition);
-                if (positions.Count == 6)
+                if (positions.Count == 8)
                 {
-                    List<Vector2> posA = positions.GetRange(0, 3).Select(x => (Vector2)x).ToList();
-                    List<Vector2> posB = positions.GetRange(3, 3).Select(x => (Vector2)x).ToList();
-                    bool res = false;
+                    List<Vector2> posA = positions.GetRange(0, 4).Select(x => (Vector2)x).ToList();
+                    List<Vector2> posB = positions.GetRange(4, 4).Select(x => (Vector2)x).ToList();
                     if (NarrowPhaseType == NarrowPhaseType.SAT)
-                        res = SAT.OverlapPolyPoly2D(posA, posB, SeparatePoly);
+						isOverlap = SAT.OverlapPolyPoly2D(posA, posB, SeparatePoly);
                     else if (NarrowPhaseType == NarrowPhaseType.GJK)
-                        res = GJK.OverlapPolyPoly2D(posA, posB, SeparatePoly);
-                    if (res)
+						isOverlap = GJK.OverlapPolyPoly2D(posA, posB, SeparatePoly);
+                    if (isOverlap)
                     {
-                        Debug.Log("两个三角形判定区域有重叠");
+                        Debug.Log("两个多边形判定区域有重叠");
 
                         // 如果需要分离，更新三角形顶点
                         if (SeparatePoly)
                         {
-                            for (int i = 0; i < 3; ++i)
+                            for (int i = 0; i < 4; ++i)
                             {
-                                positions[i + 3] = posB[i];
+                                positions[i + 4] = posB[i];
                             }
                         }
                     }
                     else
-                        Debug.Log("两个三角形判定区域没有重叠");
+                        Debug.Log("两个多边形判定区域没有重叠");
                 }
             }
+			else if (Input.GetKeyDown(KeyCode.P))
+			{
+				bool res = false;
+				if (NarrowPhaseType == NarrowPhaseType.SAT)
+					res = SAT.OverlapPolyPoly2D(TestPolyA, TestPolyB, SeparatePoly);
+				else if (NarrowPhaseType == NarrowPhaseType.GJK)
+					res = GJK.OverlapPolyPoly2D(TestPolyA, TestPolyB, SeparatePoly);
+				if (res)
+					Debug.Log("两个多边形判定区域有重叠");
+				else
+					Debug.Log("两个多边形判定区域没有重叠");
+			}
         }
 
         public void OnDrawGizmos()
         {
-            // 绘制三角形
-            if (positions.Count >= 2)
+			// 绘制三角形
+			int n = positions.Count;
+			if (n == 0)
+				return;
+			if (n <= 4)
             {
-                if (positions.Count == 2)
-                    DrawTriangle(positions[0], positions[1], mousePosition, Color.red);
-                else
-                    DrawTriangle(positions[0], positions[1], positions[2], Color.red);
-                if (positions.Count == 5)
-                    DrawTriangle(positions[3], positions[4], mousePosition, Color.green);
-                else if (positions.Count == 6)
-                    DrawTriangle(positions[3], positions[4], positions[5], Color.green);
-            }
+				for (int i = 0; i < n - 1; ++i)
+					DrawLine(positions[i], positions[i + 1], Color.green);
+				if (n != 4)
+					DrawLine(mousePosition, positions[n - 1], Color.green);
+				else
+					DrawLine(positions[0], positions[3], Color.green);
+			}
+			else
+			{
+				for (int i = 0; i < 3; ++i)
+					DrawLine(positions[i], positions[i + 1], Color.green);
+				DrawLine(positions[0], positions[3], Color.green);
+				for (int i = 4; i < n - 1; ++i)
+					DrawLine(positions[i], positions[i + 1], Color.blue);
+				if (n != 8)
+					DrawLine(mousePosition, positions[n - 1], Color.blue);
+				else
+					DrawLine(positions[4], positions[7], Color.blue);
+			}
         }
 
-        public void DrawTriangle(Vector3 p1, Vector3 p2, Vector3 p3, Color c)
+        public void DrawLine(Vector3 p1, Vector3 p2, Color c)
         {
             // 使用Gizmos绘制三角形的三条边
-            Gizmos.color = c;
+            Gizmos.color = isOverlap ? Color.red : c;
             Gizmos.DrawLine(p1, p2);
-            Gizmos.DrawLine(p2, p3);
-            Gizmos.DrawLine(p3, p1);
         }
     }
 }

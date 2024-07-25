@@ -259,6 +259,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NarrowPhaseType: 1
+  TestPolyA:
+  - {x: 0, y: 5}
+  - {x: 1, y: 6}
+  - {x: 4, y: 3}
+  - {x: 3, y: 2}
+  TestPolyB:
+  - {x: 3, y: 4}
+  - {x: 3, y: 6}
+  - {x: 5, y: 6}
+  - {x: 5, y: 4}
   SeparatePoly: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
