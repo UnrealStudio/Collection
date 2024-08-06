@@ -25,16 +25,16 @@ namespace NarrowPhase
             {
                 Vector2 p = polyA[i];
                 Vector2 q = polyA[j];
-                var normal = Consts.PerpendicularLine(p, q);
+                var normal = Consts2D.PerpendicularLine(p, q);
                 ProjectPoly(polyA, normal, out float aMin, out float aMax, needSeparate);
                 ProjectPoly(polyB, normal, out float bMin, out float bMax, needSeparate);
-                if (!Consts.OverlapRange(aMin, aMax, bMin, bMax))
+                if (!Consts2D.OverlapRange(aMin, aMax, bMin, bMax))
                     return false;
 
                 // 分离思路：找出最短分离轴
                 if (needSeparate)
                 {
-                    float len = Consts.OverlapRangeLength(aMin, aMax, bMin, bMax);
+                    float len = Consts2D.OverlapRangeLength(aMin, aMax, bMin, bMax);
                     if (smallestOverlap > len)
                     {
                         smallestOverlap = len;
@@ -49,15 +49,15 @@ namespace NarrowPhase
             {
                 Vector2 p = polyB[i];
                 Vector2 q = polyB[j];
-                var normal = Consts.PerpendicularLine(p, q);
+                var normal = Consts2D.PerpendicularLine(p, q);
                 ProjectPoly(polyA, normal, out float aMin, out float aMax, needSeparate);
                 ProjectPoly(polyB, normal, out float bMin, out float bMax, needSeparate);
-                if (!Consts.OverlapRange(aMin, aMax, bMin, bMax))
+                if (!Consts2D.OverlapRange(aMin, aMax, bMin, bMax))
                     return false;
 
                 if (needSeparate)
                 {
-                    float len = Consts.OverlapRangeLength(aMin, aMax, bMin, bMax);
+                    float len = Consts2D.OverlapRangeLength(aMin, aMax, bMin, bMax);
                     if (smallestOverlap > len)
                     {
                         smallestOverlap = len;
@@ -82,11 +82,11 @@ namespace NarrowPhase
                     p = endPt == m - 1 ? polyB[0] : polyB[endPt + 1];
                     q = polyB[endPt];
                 }
-                separationAxis = Consts.PerpendicularLine(p, q);
+                separationAxis = Consts2D.PerpendicularLine(p, q);
                 separationAxis.Normalize();
 
                 // 计算分离向量
-                Vector2 separationVector = Mathf.Sign(Vector2.Dot(Consts.GetCentroid(polyA) - Consts.GetCentroid(polyB), separationAxis)) * smallestOverlap * separationAxis;
+                Vector2 separationVector = Mathf.Sign(Vector2.Dot(Consts2D.GetCentroid(polyA) - Consts2D.GetCentroid(polyB), separationAxis)) * smallestOverlap * separationAxis;
                 for (int i = 0; i < m; ++i)
                 {
                     polyB[i] = new Vector2(polyB[i].x - separationVector.x, polyB[i].y - separationVector.y);

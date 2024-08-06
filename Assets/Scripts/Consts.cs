@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class Consts
+public static class Consts2D
 {
     public const float eps = 1e-6f;
 
@@ -61,7 +61,7 @@ public static class Consts
     ///<param name="point">点的坐标</param>
     ///<param name="polygon">多边形的各个顶点坐标</param>
     ///<returns>如果在多边形内返回True，否则返回False</returns>
-    public static bool InnerGraphByAngle(Vector2 point, params Vector2[] polygon)
+    public static bool InnerGraphByAngle(in Vector2 point, params Vector2[] polygon)
     {
         // 思路：从给定点绘制一条射线，然后计算该射线与多边形边界的交点数量
         int intersectCount = 0;
@@ -133,4 +133,32 @@ public static class Consts
         float k = (p2.y - p1.y) / (p2.x - p1.x);
         return Mathf.Abs(k * p.x - p.y + p1.y - k * p1.x) / Mathf.Sqrt(k + 1);
     }
+}
+
+
+public static class Consts3D
+{
+	public const float eps = 1e-6f;
+
+	public static bool IsPointInsideTriangle(ref Vector3 point, ref Vector3 triangle0, ref Vector3 triangle1, ref Vector3 triangle2, ref Vector3 triangleNormal)
+	{
+		// Discard zero-size triangles; slower but more logical than considering the triangle edges as outside
+		if (Vector3.Cross(triangle1 - triangle0, triangle2 - triangle0) == Vector3.zero)
+		{
+			return false;
+		}
+
+		Vector3 pointTo0 = triangle0 - point;
+		Vector3 pointTo1 = triangle1 - point;
+		Vector3 pointTo2 = triangle2 - point;
+
+		if (Vector3.Dot(Vector3.Cross(pointTo0, pointTo1), triangleNormal) < 0.0f ||
+			Vector3.Dot(Vector3.Cross(pointTo1, pointTo2), triangleNormal) < 0.0f ||
+			Vector3.Dot(Vector3.Cross(pointTo2, pointTo0), triangleNormal) < 0.0f)
+		{
+			return false;
+		}
+
+		return true;
+	}
 }

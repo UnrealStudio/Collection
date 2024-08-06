@@ -54,8 +54,8 @@ namespace Spliting
                 //分别代表与一个三角面的01边、12边、02边的交点
                 Vector2 crossPoint0_1, crossPoint1_2, crossPoint0_2;
                 //如果与01边和12边有交点
-                if (Consts.HasCrossPoint(startPos, endPos, point0, point1, out crossPoint0_1) &&
-                    Consts.HasCrossPoint(startPos, endPos, point1, point2, out crossPoint1_2))
+                if (Consts2D.HasCrossPoint(startPos, endPos, point0, point1, out crossPoint0_1) &&
+                    Consts2D.HasCrossPoint(startPos, endPos, point1, point2, out crossPoint1_2))
                 {
                     //为两个交点计算UV坐标
                     CrossUVList.Add(GetUVPoint(uvList[triIndex0], uvList[triIndex1], point0, point1, crossPoint0_1));
@@ -64,8 +64,8 @@ namespace Spliting
                     CrossVertList.Add(crossPoint0_1);
                     CrossVertList.Add(crossPoint1_2);
                 }
-                else if (Consts.HasCrossPoint(startPos, endPos, point1, point2, out crossPoint1_2) &&
-                         Consts.HasCrossPoint(startPos, endPos, point2, point0, out crossPoint0_2))
+                else if (Consts2D.HasCrossPoint(startPos, endPos, point1, point2, out crossPoint1_2) &&
+                         Consts2D.HasCrossPoint(startPos, endPos, point2, point0, out crossPoint0_2))
                 {
                     CrossUVList.Add(GetUVPoint(uvList[triIndex1], uvList[triIndex2], point1, point2, crossPoint1_2));
                     CrossUVList.Add(GetUVPoint(uvList[triIndex0], uvList[triIndex2], point0, point2, crossPoint0_2));
@@ -73,8 +73,8 @@ namespace Spliting
                     CrossVertList.Add(crossPoint1_2);
                     CrossVertList.Add(crossPoint0_2);
                 }
-                else if (Consts.HasCrossPoint(startPos, endPos, point0, point1, out crossPoint0_1) &&
-                         Consts.HasCrossPoint(startPos, endPos, point2, point0, out crossPoint0_2))
+                else if (Consts2D.HasCrossPoint(startPos, endPos, point0, point1, out crossPoint0_1) &&
+                         Consts2D.HasCrossPoint(startPos, endPos, point2, point0, out crossPoint0_2))
                 {
                     CrossUVList.Add(GetUVPoint(uvList[triIndex0], uvList[triIndex1], point0, point1, crossPoint0_1));
                     CrossUVList.Add(GetUVPoint(uvList[triIndex0], uvList[triIndex2], point0, point2, crossPoint0_2));
@@ -140,12 +140,12 @@ namespace Spliting
             //定义左侧是什么
             OldMeshData LeftMesh = new();
             OldMeshData RightMesh = new();
-            bool LeftPos = Consts.IsPointOnLeftSideOfLine(vertList[0], startPos, endPos);
+            bool LeftPos = Consts2D.IsPointOnLeftSideOfLine(vertList[0], startPos, endPos);
             int ExceedLineTime = 0;
             LeftMesh.AddVert(vertList[0], uvList[0]);
             for (int i = 1; i < preVertCount; ++i)
             {
-                bool Pos = Consts.IsPointOnLeftSideOfLine(vertList[i], startPos, endPos);
+                bool Pos = Consts2D.IsPointOnLeftSideOfLine(vertList[i], startPos, endPos);
                 //第一次见到
                 if (Pos != LeftPos)
                 {
@@ -271,16 +271,16 @@ namespace Spliting
                 Vector2 point1 = vertList[triIndex1];
                 Vector2 point2 = vertList[triIndex2];
                 //判断切割线与每个三角面的任意边是否有交点
-                if (Consts.HasCrossPoint(startPos, endPos, point0, point1, out _) ||
-                    Consts.HasCrossPoint(startPos, endPos, point1, point2, out _) ||
-                    Consts.HasCrossPoint(startPos, endPos, point2, point0, out _))
+                if (Consts2D.HasCrossPoint(startPos, endPos, point0, point1, out _) ||
+                    Consts2D.HasCrossPoint(startPos, endPos, point1, point2, out _) ||
+                    Consts2D.HasCrossPoint(startPos, endPos, point2, point0, out _))
                 {
                     isEffective = true;
                 }
                 //判断是否有交点后判断是否是不合法的切割线，如果不合法直接return
                 //原理：任何一点在任意三角面内，都代表整个物体没有被合法切割
-                if (Consts.InnerGraphByAngle(startPos, point0, point1, point2) ||
-                    Consts.InnerGraphByAngle(endPos, point0, point1, point2))
+                if (Consts2D.InnerGraphByAngle(startPos, point0, point1, point2) ||
+                    Consts2D.InnerGraphByAngle(endPos, point0, point1, point2))
                 {
                     // Debug.Log("切割不完整，有至少一个点在图片内");
                     return false;

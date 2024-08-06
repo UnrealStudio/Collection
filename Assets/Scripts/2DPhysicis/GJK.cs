@@ -17,8 +17,8 @@ namespace NarrowPhase
             // GJK的分离算法是另一种算法，名为EPA
 
             // 第一个起始向量取二者的质心差
-            Vector2 CentroidA = Consts.GetCentroid(polyA);
-            Vector2 CentroidB = Consts.GetCentroid(polyB);
+            Vector2 CentroidA = Consts2D.GetCentroid(polyA);
+            Vector2 CentroidB = Consts2D.GetCentroid(polyB);
 
             List<Vector2> SimplexList = new(3);
 
@@ -39,7 +39,7 @@ namespace NarrowPhase
             // 开始递归迭代
             while(true)
             {
-                if (Consts.InnerGraphByAngle(Vector2.zero, SimplexList.ToArray()))
+                if (Consts2D.InnerGraphByAngle(Vector2.zero, SimplexList.ToArray()))
                     return true;
 
                 // 通过距离原点最近的单纯形边，找到新的单纯形顶点
@@ -93,7 +93,7 @@ namespace NarrowPhase
         /// </summary>
         private static Vector2 GetPerpendicularLineToOrigin(in Vector2 pA, in Vector2 pB)
         {
-            Vector2 normal = Consts.PerpendicularLine(pA, pB);
+            Vector2 normal = Consts2D.PerpendicularLine(pA, pB);
             return Vector2.Dot(normal, -pA) > 0 ? normal : -normal;
         }
 
@@ -123,7 +123,7 @@ namespace NarrowPhase
             int minIndex = -1;
             for (int i = 0, j = n - 1; i < n; j = i++)
             {
-                float dist = Consts.GetDistFromPoint2Line(Vector2.zero, poly[i], poly[j]);
+                float dist = Consts2D.GetDistFromPoint2Line(Vector2.zero, poly[i], poly[j]);
                 if (dist < minDist)
                 {
                     minDist = dist;
