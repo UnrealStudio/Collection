@@ -269,7 +269,7 @@ MonoBehaviour:
   - {x: 3, y: 6}
   - {x: 5, y: 6}
   - {x: 5, y: 4}
-  SeparatePoly: 0
+  SeparatePoly: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

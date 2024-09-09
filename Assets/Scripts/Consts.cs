@@ -57,11 +57,25 @@ public static class Consts2D
     /// </summary>
     public static float OverlapRangeLength(float aMin, float aMax, float bMin, float bMax) => Mathf.Min(aMax, bMax) - Mathf.Max(aMin, bMin);
 
-    ///<summary>计算一个点是否在一个多边形内</summary>
-    ///<param name="point">点的坐标</param>
-    ///<param name="polygon">多边形的各个顶点坐标</param>
-    ///<returns>如果在多边形内返回True，否则返回False</returns>
-    public static bool InnerGraphByAngle(in Vector2 point, params Vector2[] polygon)
+	/// <summary>
+	/// 计算一点到一条直线的垂线向量
+	/// </summary>
+	public static Vector2 PerpendicularLine(in Vector2 point, in Vector2 linePA, in Vector2 linePB)
+	{
+		Vector2 AB = linePB - linePA;
+		Vector2 PA = point - linePA;
+		//_ = point - linePB;
+		float t = Vector2.Dot(PA, AB) / Vector2.Dot(AB, AB);
+		Vector2 Q = linePA + t * AB; // 计算投影点Q
+
+		return Q - point; // 计算点P到投影点Q的向量
+	}
+
+	///<summary>计算一个点是否在一个多边形内</summary>
+	///<param name="point">点的坐标</param>
+	///<param name="polygon">多边形的各个顶点坐标</param>
+	///<returns>如果在多边形内返回True，否则返回False</returns>
+	public static bool InnerGraphByAngle(in Vector2 point, params Vector2[] polygon)
     {
         // 思路：从给定点绘制一条射线，然后计算该射线与多边形边界的交点数量
         int intersectCount = 0;
@@ -109,14 +123,14 @@ public static class Consts2D
     /// 判断一个点是否在某条线段（直线）的左侧
     /// </summary>
     /// <param name="point">点的坐标</param>
-    /// <param name="startPoint">线段起点</param>
-    /// <param name="endPoint">线段终点</param>
-    public static bool IsPointOnLeftSideOfLine(Vector2 point, Vector2 startPoint, Vector2 endPoint)
+    /// <param name="linePA">线段起点</param>
+    /// <param name="linePB">线段终点</param>
+    public static bool IsPointOnLeftSideOfLine(in Vector2 point, in Vector2 linePA, in Vector2 linePB)
     {
         // 计算直线上的向量
-        Vector2 lineVector = endPoint - startPoint;
+        Vector2 lineVector = linePB - linePA;
         // 计算起始点到点的向量
-        Vector2 pointVector = point - startPoint;
+        Vector2 pointVector = point - linePA;
         // 使用叉乘判断点是否在直线的左侧
         float crossProduct = (lineVector.x * pointVector.y) - (lineVector.y * pointVector.x);
         // 如果叉乘结果大于0，则点在直线的左侧
@@ -126,13 +140,15 @@ public static class Consts2D
     /// <summary>
     /// 计算点到直线的距离，使用斜率式
     /// </summary>
-    public static float GetDistFromPoint2Line(Vector3 p, Vector3 p1, Vector3 p2)
+    public static float GetDistFromPoint2Line(in Vector2 point, in Vector2 linePA, in Vector2 linePB)
     {
-        if(Mathf.Abs(p2.x - p1.x) <= eps)
-            return Mathf.Abs(p.x - p1.x);
-        float k = (p2.y - p1.y) / (p2.x - p1.x);
-        return Mathf.Abs(k * p.x - p.y + p1.y - k * p1.x) / Mathf.Sqrt(k + 1);
+        if(Mathf.Abs(linePB.x - linePA.x) <= eps)
+            return Mathf.Abs(point.x - linePA.x);
+        float k = (linePB.y - linePA.y) / (linePB.x - linePA.x);
+        return Mathf.Abs(k * point.x - point.y + linePA.y - k * linePA.x) / Mathf.Sqrt(k * k + 1);
     }
+
+	public static Vector2 GetNormal(ref this Vector2 v) => new Vector2(-v.y, v.x);
 }
 
 

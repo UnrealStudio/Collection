@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.UI.Image;
 
 namespace NarrowPhase
 {
@@ -28,35 +27,37 @@ namespace NarrowPhase
 
             // 第二次迭代，选择第一个单纯形到原点的向量，同时进行一次过原点的判断
             SimplexList.Add(GetSimplexNode(-SimplexList[0], polyA, polyB));
-            if (!isCrossingOrigin(SimplexList[0], SimplexList[1]))
+            if (!IsCrossingOrigin(SimplexList[0], SimplexList[1]))
                 return false;
 
             // 第三次迭代，选择两个单纯形顶点的垂线，同时进行一次过原点的判断
             SimplexList.Add(GetSimplexNode(GetPerpendicularLineToOrigin(SimplexList[0], SimplexList[1]), polyA, polyB));
-            //if (!isCrossingOrigin(SimplexList[0], SimplexList[2]) && !isCrossingOrigin(SimplexList[1], SimplexList[2]))
-            //    return false;
+			//if (!isCrossingOrigin(SimplexList[0], SimplexList[2]) && !isCrossingOrigin(SimplexList[1], SimplexList[2]))
+			//    return false;
 
             // 开始递归迭代
             while(true)
             {
                 if (Consts2D.InnerGraphByAngle(Vector2.zero, SimplexList.ToArray()))
-                    return true;
+					break;
 
-                // 通过距离原点最近的单纯形边，找到新的单纯形顶点
-                Vector2 edge = GetCloestEdgeToOrigin(SimplexList, out var index1, out var index2);
-                Vector2 newNode = GetSimplexNode(GetPerpendicularLineToOrigin(edge, Vector2.zero), polyA, polyB);
+				// 通过距离原点最近的单纯形边，找到新的单纯形顶点
+				GetCloestEdgeToOrigin(SimplexList, out var index1, out var index2);
+
+				// GetPerpendicularLineToOrigin 虽然传入的是边，但是同时传入边和原点，在处理后也相当于传入了一条边的两个点
+				Vector2 newNode = GetSimplexNode(GetPerpendicularLineToOrigin(SimplexList[index1], SimplexList[index2]), polyA, polyB);
 
                 // 如果存在重复的顶点，退出递归
                 for(int i = 0; i < 3; ++i)
                 {
-                    if (newNode == SimplexList[i])
-                        return false;
-                }
-                if (!isCrossingOrigin(SimplexList[index1], newNode) && !isCrossingOrigin(SimplexList[index2], newNode))
-                    return false;
+					if (newNode == SimplexList[i])
+						return false;
+				}
+                if (!IsCrossingOrigin(SimplexList[index1], newNode) && !IsCrossingOrigin(SimplexList[index2], newNode))
+					return false;
 
-                // 更新单纯形
-                for(int i = 0; i < 3; ++i)
+				// 更新单纯形
+				for (int i = 0; i < 3; ++i)
                 {
                     if(i != index1 && i != index2)
                     {
@@ -65,6 +66,40 @@ namespace NarrowPhase
                     }
                 }
             }
+
+			// 分离算法：EPA
+			// EPA 的核心思路是拓展单纯形，直到找到最近的分离轴
+			// 分离轴就是原点到最近的单纯形（拓展后的）边的垂线
+			if (needSeparate)
+			{
+				#region EPA算法
+				while (true)
+				{
+					// 接下来的步骤，要通过背离原点的方向，找到最近的分离轴
+					GetCloestEdgeToOrigin(SimplexList, out var index1, out var index2);
+					Vector2 newNode = GetSimplexNode(-GetPerpendicularLineToOrigin(SimplexList[index1], SimplexList[index2]), polyA, polyB);
+
+					// 如果存在重复的顶点，退出递归，原点到最短边的垂线向量就是分离轴
+					if (SimplexList.Contains(newNode))
+					{
+						Vector2 separationVector = Consts2D.PerpendicularLine(Vector2.zero, SimplexList[index1], SimplexList[index2]);
+						TutorialPolyen.Instance.SimplexDrawList = SimplexList;
+						TutorialPolyen.Instance.SeprateVec = separationVector;
+						if (Vector2.Dot(separationVector, Consts2D.GetCentroid(polyB) - Consts2D.GetCentroid(polyA)) < 0)
+							separationVector = -separationVector;
+						for (int i = 0; i < polyB.Count; ++i)
+						{
+							polyB[i] += separationVector;
+						}
+						break;
+					}
+
+					// 由于多边单纯形的顶点是有序的，有一种规律，新的顶点一定在刚才找到的距离最短边的两端点之间
+					SimplexList.Insert(index1, newNode);
+				}
+				#endregion
+			}
+			return true;
         }
 
         /// <summary>
@@ -108,10 +143,10 @@ namespace NarrowPhase
         }
 
         /// <summary>
-        /// 检查两条点是否分别在原点的两侧<br/>
-        /// 两侧的依据是，过任一点到原点的向量做垂线，得到的垂线将两点分割到左右两侧，简化后就是点乘结果大于0
+        /// 检查两点是否分别在原点的两侧<br/>
+        /// 两侧的依据是，两点的点乘小于0
         /// </summary>
-        private static bool isCrossingOrigin(in Vector2 pA, in Vector2 pB) => Vector2.Dot(pA, -pB) >= 0;
+        private static bool IsCrossingOrigin(in Vector2 pA, in Vector2 pB) => Vector2.Dot(pA, -pB) >= 0;
 
         /// <summary>
         /// 找到多边形距离原点最近的边

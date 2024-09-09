@@ -12,6 +12,8 @@ namespace NarrowPhase
 
     public class TutorialPolyen : MonoBehaviour
     {
+		public static TutorialPolyen Instance;
+
         public NarrowPhaseType NarrowPhaseType;
 
         // 存储屏幕坐标的列表
@@ -25,7 +27,15 @@ namespace NarrowPhase
         // 是否分离两个多边形
         public bool SeparatePoly;
 
-        public void Update()
+		public List<Vector2> SimplexDrawList;
+		public Vector2 SeprateVec;
+
+		public void Awake()
+		{
+			Instance = this;
+		}
+
+		public void Update()
         {
             // 记录鼠标点击的屏幕位置，转换为世界坐标，为了可视化所以外移
             mousePosition = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, Camera.main.nearClipPlane));
@@ -79,7 +89,7 @@ namespace NarrowPhase
 
         public void OnDrawGizmos()
         {
-			// 绘制三角形
+			// 绘制四边形
 			int n = positions.Count;
 			if (n == 0)
 				return;
@@ -104,13 +114,29 @@ namespace NarrowPhase
 				else
 					DrawLine(positions[4], positions[7], Color.blue);
 			}
-        }
 
-        public void DrawLine(Vector3 p1, Vector3 p2, Color c)
+			// 绘制单纯形（如果有）
+			if(SimplexDrawList != null && SimplexDrawList.Count > 1)
+			{
+				for (int i = 0, j = SimplexDrawList.Count - 1; i < SimplexDrawList.Count; j = i++)
+				{
+					DrawLinePure(SimplexDrawList[j], SimplexDrawList[i], Color.black);
+				}
+				DrawLinePure(SeprateVec, Vector2.zero, Color.white);
+			}
+		}
+
+		public void DrawLine(Vector3 p1, Vector3 p2, Color c)
         {
-            // 使用Gizmos绘制三角形的三条边
+            // 使用Gizmos绘制线段
             Gizmos.color = isOverlap ? Color.red : c;
             Gizmos.DrawLine(p1, p2);
         }
-    }
+
+		public void DrawLinePure(Vector3 p1, Vector3 p2, Color c)
+		{
+			Gizmos.color = c;
+			Gizmos.DrawLine(p1, p2);
+		}
+	}
 }
