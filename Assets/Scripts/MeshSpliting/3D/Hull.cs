@@ -106,6 +106,7 @@ public class Hull
 		// 根据分配的顶点信息，生成新的三角面
 		AssignTriangles(resultA, resultB, vertexAbovePlane, oldToNewVertexMap, localPointOnPlane, localPlaneNormal, out List<Vector3> cutEdges);
 
+		// 补全切割面
 		if (fillCut)
 			FillCutEdges(resultA, resultB, cutEdges, localPlaneNormal, uvMapper);
 
@@ -208,7 +209,7 @@ public class Hull
 					SplitTriangle(b, a, oldToNewVertexMap, pointOnPlane, planeNormal, top, cw, ccw, out cutVertex1, out cutVertex0);
 				}
 
-				// Add cut edge
+				// 添加切割线
 				if (cutVertex0 != cutVertex1)
 				{
 					cutEdges.Add(cutVertex0);
@@ -374,10 +375,12 @@ public class Hull
 		ccwIntersection = ccwVertex;
 	}
 
-	// TODO 下篇文章再写..
-	private void FillCutEdges(Hull a, Hull b, List<Vector3> edges, Vector3 planeNormal, UvMapper uvMapper)
+	/// <summary>
+	/// 补全切割面
+	/// </summary>
+	private void FillCutEdges(Hull a, Hull b, List<Vector3> cutEdges, Vector3 planeNormal, UvMapper uvMapper)
 	{
-		int edgeCount = edges.Count / 2;
+		int edgeCount = cutEdges.Count / 2;
 
 		List<Vector3> points = new(edgeCount);
 		List<int> outline = new(edgeCount * 2);
@@ -388,13 +391,13 @@ public class Hull
 		{
 			int next = current + 1;
 
-			// Find the next edge
+			// 找到下一个相连接的点，这个点一定是基本重合的
 			int nearest = start;
-			float nearestDistance = (edges[current * 2 + 1] - edges[start * 2 + 0]).sqrMagnitude;
+			float nearestDistance = (cutEdges[current * 2 + 1] - cutEdges[start * 2 + 0]).sqrMagnitude;
 
 			for (int other = next; other < edgeCount; other++)
 			{
-				float distance = (edges[current * 2 + 1] - edges[other * 2 + 0]).sqrMagnitude;
+				float distance = (cutEdges[current * 2 + 1] - cutEdges[other * 2 + 0]).sqrMagnitude;
 
 				if (distance < nearestDistance)
 				{
@@ -403,45 +406,40 @@ public class Hull
 				}
 			}
 
-			// Is the current edge the last edge in this edge loop?
+			// 当前边是否是本次循环最终要找的边（起始边），
+			// 如果模型是连续的，进入后代表整个边缘已经排序完成
 			if (nearest == start && current > start)
 			{
+				// 在正常的情况下，这时的 current 是 edgeCount - 1
 				int pointStart = points.Count;
 				int pointCounter = pointStart;
 
-				// Add this edge loop to the triangulation lists
+				// 将切割边加入到 triangulation 构造需要的数据集合中
 				for (int edge = start; edge < current; edge++)
 				{
-					points.Add(edges[edge * 2 + 0]);
+					points.Add(cutEdges[edge * 2 + 0]);
 					outline.Add(pointCounter++);
 					outline.Add(pointCounter);
 				}
 
-				points.Add(edges[current * 2 + 0]);
+				points.Add(cutEdges[current * 2 + 0]);
 				outline.Add(pointCounter);
 				outline.Add(pointStart);
 
-				// Start a new edge loop
+				// 注意：如果切割的模型存在不相交的组成部分（非接触的实体），这里需要再次开始下一个循环
 				start = next;
 			}
-			else if (next < edgeCount)
+			else if (next < edgeCount && next != nearest)
 			{
-				// Move the nearest edge sh that it follows the current edge
-				Vector3 n0 = edges[next * 2 + 0];
-				Vector3 n1 = edges[next * 2 + 1];
-
-				edges[next * 2 + 0] = edges[nearest * 2 + 0];
-				edges[next * 2 + 1] = edges[nearest * 2 + 1];
-
-				edges[nearest * 2 + 0] = n0;
-				edges[nearest * 2 + 1] = n1;
+				// 让最近的边跟当前边交换位置，这样就可以保证边缘是有序的
+				(cutEdges[next * 2 + 0], cutEdges[nearest * 2 + 0]) = (cutEdges[nearest * 2 + 0], cutEdges[next * 2 + 0]);
+				(cutEdges[next * 2 + 1], cutEdges[nearest * 2 + 1]) = (cutEdges[nearest * 2 + 1], cutEdges[next * 2 + 1]);
 			}
 		}
 
 		if (points.Count > 0)
 		{
-			// Triangulate the outline
-
+			// 根据轮廓，进行三角化
 			var triangulator = new Triangulator(points, outline, planeNormal);
 
 			triangulator.Fill(out int[] newEdges, out int[] newTriangles, out int[] newTriangleEdges);
@@ -452,7 +450,7 @@ public class Hull
 
 			uvMapper.Map(points, planeNormal, out Vector4[] tangentsA, out Vector4[] tangentsB, out Vector2[] uvsA, out Vector2[] uvsB);
 
-			// Add the new vertices
+			// 添加顶点
 			int offsetA = a.vertices.Count;
 			int offsetB = b.vertices.Count;
 
@@ -489,7 +487,7 @@ public class Hull
 				}
 			}
 
-			// Add the new triangles
+			// 添加三角面
 			int newTriangleCount = newTriangles.Length / 3;
 
 			for (int i = 0; i < newTriangleCount; i++)

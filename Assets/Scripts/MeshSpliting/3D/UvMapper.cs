@@ -31,13 +31,11 @@ public class UvMapper : MonoBehaviour
 
 	public void Map(IList<Vector3> points, Vector3 planeNormal, out Vector4[] tangentsA, out Vector4[] tangentsB, out Vector2[] uvsA, out Vector2[] uvsB)
 	{
-		// Calculate texture direction vectors
+		// 计算纹理方向向量
 		Vector3 u = Vector3.Cross(planeNormal, Vector3.up);
 
 		if (u == Vector3.zero)
-		{
 			u = Vector3.Cross(planeNormal, Vector3.forward);
-		}
 
 		Vector3 v = Vector3.Cross(u, planeNormal);
 
@@ -60,6 +58,7 @@ public class UvMapper : MonoBehaviour
 		// Set uvs
 		Vector2[] uvs = new Vector2[points.Count];
 
+		// 最大与最小均为零点，因为在计算坐标时，是能为负数的（这里计算的不是UV坐标）
 		Vector2 min = Vector2.zero;
 		Vector2 max = Vector2.zero;
 
@@ -88,10 +87,11 @@ public class UvMapper : MonoBehaviour
 		{
 			float largestSide = Mathf.Max(originalSize.x, originalSize.y);
 
-			Vector2 offset = new Vector2();
-
-			offset.x = (largestSide - originalSize.x) * 0.5f;
-			offset.y = (largestSide - originalSize.y) * 0.5f;
+			Vector2 offset = new Vector2
+			{
+				x = (largestSide - originalSize.x) * 0.5f,
+				y = (largestSide - originalSize.y) * 0.5f
+			};
 
 			min -= offset;
 			max += offset;
@@ -99,10 +99,11 @@ public class UvMapper : MonoBehaviour
 
 		if (centerMeshOrigo)
 		{
-			Vector2 largestExtent = new Vector2();
-
-			largestExtent.x = Mathf.Max(Mathf.Abs(min.x), Mathf.Abs(max.x));
-			largestExtent.y = Mathf.Max(Mathf.Abs(min.y), Mathf.Abs(max.y));
+			Vector2 largestExtent = new Vector2
+			{
+				x = Mathf.Max(Mathf.Abs(min.x), Mathf.Abs(max.x)),
+				y = Mathf.Max(Mathf.Abs(min.y), Mathf.Abs(max.y))
+			};
 
 			min = -largestExtent;
 			max = largestExtent;
@@ -113,7 +114,7 @@ public class UvMapper : MonoBehaviour
 
 		for (int i = 0; i < points.Count; i++)
 		{
-			// Convert uvs to the range [0, 1]
+			// 映射到 [0,1] 区间
 			uvs[i].x = (uvs[i].x - min.x) * invSize.x;
 			uvs[i].y = (uvs[i].y - min.y) * invSize.y;
 

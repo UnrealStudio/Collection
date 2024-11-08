@@ -40,87 +40,84 @@ public class Triangulator
 	{
 		lock (key)
 		{
-			// Prepare triangulation
+			// 准备三角化
 			FindLoops();
-
 			FindConcavities();
-
 			PrepareDuplicateEdges();
 
-			// Triangulate loops
-			for (int i = 0; i < loops.Count; i++)
-			{
-				List<int> loop = loops[i];
-				List<bool> concavity = concavities[i];
+			// TODO 凹包带来的bug修正
+			//// 三角化循环
+			//for (int i = 0; i < loops.Count; i++)
+			//{
+			//	List<int> loop = loops[i];
+			//	List<bool> concavity = concavities[i];
+			//	int index = 0;
+			//	int unsuitableTriangles = 0;
 
-				// Triangulate loop
-				int index = 0;
-				int unsuitableTriangles = 0;
+			//	while (loop.Count >= 3)
+			//	{
+			//		// 评估三角形，zero就是三角化算法中始终固定构成三角面的第零个点
+			//		int zero = index == 0 ? loop.Count - 1 : index - 1;
+			//		int first = index;
+			//		int second = (index + 1) % loop.Count;
+			//		int third = (index + 2) % loop.Count;
 
-				while (loop.Count >= 3)
-				{
-					// Evaluate triangle
-					int zero = index == 0 ? loop.Count - 1 : index - 1;
-					int first = index;
-					int second = (index + 1) % loop.Count;
-					int third = (index + 2) % loop.Count;
+			//		if (concavity[first] || IsTriangleOverlappingLoop(first, second, third, loop, concavity))
+			//		{
+			//			// This triangle is not an ear, examine the next one
+			//			index++;
+			//			unsuitableTriangles++;
+			//		}
+			//		else
+			//		{
+			//			// Evaluate loop merge
 
-					if (concavity[first] || IsTriangleOverlappingLoop(first, second, third, loop, concavity))
-					{
-						// This triangle is not an ear, examine the next one
-						index++;
-						unsuitableTriangles++;
-					}
-					else
-					{
-						// Evaluate loop merge
+			//			if (MergeLoops(first, second, third, loop, concavity, out int swallowedLoopIndex))
+			//			{
+			//				// Merge occured, adjust loop index
+			//				if (swallowedLoopIndex < i)
+			//				{
+			//					i--;
+			//				}
 
-						if (MergeLoops(first, second, third, loop, concavity, out int swallowedLoopIndex))
-						{
-							// Merge occured, adjust loop index
-							if (swallowedLoopIndex < i)
-							{
-								i--;
-							}
+			//				//ValidateConcavities();
+			//			}
+			//			else
+			//			{
+			//				// No merge occured, fill triangle
+			//				FillTriangle(zero, first, second, third, loop, concavity);
+			//			}
 
-							//ValidateConcavities();
-						}
-						else
-						{
-							// No merge occured, fill triangle
-							FillTriangle(zero, first, second, third, loop, concavity);
-						}
+			//			// Suitable triangles may have appeared
+			//			unsuitableTriangles = 0;
+			//		}
 
-						// Suitable triangles may have appeared
-						unsuitableTriangles = 0;
-					}
+			//		if (unsuitableTriangles >= loop.Count)
+			//		{
+			//			// No more suitable triangles in this loop, continue with the next one
+			//			break;
+			//		}
 
-					if (unsuitableTriangles >= loop.Count)
-					{
-						// No more suitable triangles in this loop, continue with the next one
-						break;
-					}
+			//		// Wrap index
+			//		if (index >= loop.Count)
+			//		{
+			//			index = 0;
+			//			unsuitableTriangles = 0;
+			//		}
+			//	}
 
-					// Wrap index
-					if (index >= loop.Count)
-					{
-						index = 0;
-						unsuitableTriangles = 0;
-					}
-				}
+			//	// Is the loop filled?
+			//	if (loop.Count <= 2)
+			//	{
+			//		// Remove the loop in order to avoid future merges
+			//		loops.RemoveAt(i);
+			//		concavities.RemoveAt(i);
 
-				// Is the loop filled?
-				if (loop.Count <= 2)
-				{
-					// Remove the loop in order to avoid future merges
-					loops.RemoveAt(i);
-					concavities.RemoveAt(i);
+			//		i--;
+			//	}
+			//}
 
-					i--;
-				}
-			}
-
-			// Fill any remaining loops using triangle fans for robustness
+			// 使用三角形面填充剩余的Loop
 			for (int i = 0; i < loops.Count; i++)
 			{
 				List<int> loop = loops[i];
@@ -132,15 +129,20 @@ public class Triangulator
 				}
 			}
 
-			// OnFinished triangulation
-			RemoveDuplicateEdges();
+			// 即将完成，清理
+			//RemoveDuplicateEdges();
 
 			SetOutput(out newEdges, out newTriangles, out newTriangleEdges);
 		}
 	}
 
+	/// <summary>
+	/// 将切面的线段组分离成拓扑意义上的多边形边集合
+	/// </summary>
 	private void FindLoops()
 	{
+		// 由于可能传入的边集合可能是多个封闭多边形的组合
+		// 所以需要将线段组分离成多个封闭的集合
 		loops = new List<List<int>>();
 
 		List<int> loop = new List<int>(edges.Count / 2);
@@ -152,30 +154,30 @@ public class Triangulator
 			int startPoint = edges[edge + 0];
 			int endPoint = edges[edge + 1];
 
-			// Make sure that the current edge is connected with the previous one
+			// 一次小保护检测
 			if (loop.Count >= 1)
 			{
 				int previousEndPoint = edges[edge - 1];
 
 				if (startPoint != previousEndPoint)
-				{
 					Debug.LogError("The edges do not form an edge loop!");
-				}
 			}
 
-			// Add the edge index to the loop
+			// 在一次迭代完成前，将所有的顶点都加入到loop中
 			loop.Add(edge);
-
-			// Does the current edge end the loop?
 			if (endPoint == edges[loop[0]])
 			{
 				loops.Add(loop);
 
+				// 一次迭代完成，清空loop，不需要直接申请cap了，因为没人知道可能还有多少个loop
 				loop = new List<int>();
 			}
 		}
 	}
 
+	/// <summary>
+	/// 判断每个点是否具有凹性
+	/// </summary>
 	private void FindConcavities()
 	{
 		concavities = new List<List<bool>>();
@@ -240,11 +242,14 @@ public class Triangulator
 		concavity[index] = IsLinePairConcave(ref firstLine, ref secondLine);
 	}
 
+	/// <summary>
+	/// 判断两个向量组成的顶点是否具有凹性
+	/// </summary>
 	private bool IsLinePairConcave(ref Vector3 line0, ref Vector3 line1)
 	{
 		Vector3 lineNormal0 = Vector3.Cross(line0, planeNormal);
 
-		// Zero is not considered concave in order to support zero-length lines
+		// 0向量组成的顶点视为无凹性
 		return Vector3.Dot(line1, lineNormal0) > 0.0f;
 	}
 
@@ -264,12 +269,12 @@ public class Triangulator
 			{
 				int reflexPoint = edges[loop[i] + 1];
 
-				// Do not test the reflex point if it is part of the triangle
+				// 如果是三角形的顶点，跳过
 				if (reflexPoint != point0 && reflexPoint != point1 && reflexPoint != point2)
 				{
 					Vector3 point = points[reflexPoint];
 
-					// Does the reflex point lie inside the triangle?
+					// 监测点是否在三角形内
 					if (Consts3D.IsPointInsideTriangle(ref point, ref triangle0, ref triangle1, ref triangle2, ref planeNormal))
 					{
 						return true;
@@ -411,7 +416,7 @@ public class Triangulator
 
 	private void FillTriangle(int zero, int first, int second, int third, List<int> loop, List<bool> concavity)
 	{
-		// Find triangle features
+		// 形成三角面
 		int zeroEdge = loop[zero];
 		int firstEdge = loop[first];
 		int secondEdge = loop[second];
@@ -425,7 +430,7 @@ public class Triangulator
 
 		if (loop.Count != 3)
 		{
-			// Create the cross edge
+			// 创建额外的相交边
 			crossEdge = edges.Count;
 
 			edges.Add(firstPoint);
@@ -433,11 +438,11 @@ public class Triangulator
 		}
 		else
 		{
-			// Use the third edge as the cross edge
+			// 如果是三角形，直接使用第三个边
 			crossEdge = thirdEdge;
 		}
 
-		// Add new triangle
+		// 添加三角面
 		triangles.Add(firstPoint);
 		triangles.Add(secondPoint);
 		triangles.Add(thirdPoint);
@@ -446,11 +451,11 @@ public class Triangulator
 		triangleEdges.Add(secondEdge);
 		triangleEdges.Add(crossEdge);
 
-		// Update loop
+		// 更新loop
 		loop[second] = crossEdge;
 		loop.RemoveAt(first);
 
-		// Update concavity; always update in order to support zero-length edges
+		// 更新凹点，始终更新以支持零长边
 		Vector3 zeroLine = points[firstPoint] - points[edges[zeroEdge]];
 		Vector3 crossLine = points[thirdPoint] - points[firstPoint];
 		Vector3 thirdLine = points[edges[thirdEdge + 1]] - points[thirdPoint];
